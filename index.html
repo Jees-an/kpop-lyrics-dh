@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>가사의 시간</title>
+<meta name="description" content="멜론 월간 차트 TOP100(2000–2023) 가사의 말뭉치언어학적 분석과 분위기 기반 추천">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">멀리서 본 한국 대중음악의 가사</p>
+    <h1>가사의 시간</h1>
+    <p class="lede">멜론 월간 차트 TOP100에 오른 노래 가사로 본 2000–2023년 한국 대중가요의 말</p>
+    <div class="stats" id="stats"></div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <div class="wrap">
+      <button data-tab="about" class="on">개요</button>
+      <button data-tab="top">곡 순위</button>
+      <button data-tab="freq">빈도</button>
+      <button data-tab="mwe">N-gram</button>
+      <button data-tab="kw">핵심어</button>
+      <button data-tab="col">공기어</button>
+      <button data-tab="clu">Cluster</button>
+      <button data-tab="pos">PoS-gram</button>
+            <button data-tab="fig">비유 표현</button>
+      <button data-tab="eg">시대 × 장르</button>
+      <button data-tab="case">사례 연구</button>
+      <button data-tab="rec">AI 기반 노래 추천</button>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap">
+
+<!-- 개요 -->
+<section id="about" class="tab on">
+  <div class="card">
+    <h2>무엇을 보나</h2>
+    <p>멜론 월간 차트 TOP100 가사(2000.1–2023.10, 8,250곡)</p>
+    <div class="tablebox"><table class="tbl overview">
+      <thead><tr><th>탭</th><th>무엇을 보나</th><th>단위·지표</th></tr></thead>
+      <tbody>
+        <tr><td>곡 순위</td><td>어떤 노래가 차트에서 얼마나 오래, 얼마나 높이 올랐나?</td><td>차트 점수, 차트 개월 수, 최고 순위, 1위·TOP10 개월 수</td></tr>
+        <tr><td>빈도</td><td>어떤 말이 얼마나 자주 나오나?</td><td>상대빈도*, 곡 비율</td></tr>
+        <tr><td>N-gram</td><td>어떤 말들이 자주 붙어 다니나? (예: 사랑하지 않)</td><td>상대빈도*, 곡 비율, logDice</td></tr>
+        <tr><td>핵심어</td><td>특정 시대·장르에서 유난히 많이 쓰인 말은 무엇인가?</td><td>LL, Log Ratio</td></tr>
+        <tr><td>공기어</td><td>한 줄 안에서 어떤 말이 함께 나오나?</td><td>logDice</td></tr>
+        <tr><td>Cluster</td><td>원하는 자리에 원하는 말이 든 표현은 무엇인가?</td><td>상대빈도*, 곡 비율</td></tr>
+        <tr><td>PoS-gram</td><td>품사는 어떤 패턴으로 이어지나?</td><td>상대빈도*, 곡 비율</td></tr>
+        <tr><td>비유 표현</td><td>‘~처럼’, ‘A는 B다’ 같은 비유는 어떻게 바뀌었나?</td><td>가사 1천 행당, 곡 비율</td></tr>
+        <tr><td>시대 × 장르</td><td>시대와 장르마다 가사가 어떻게 다르고, 해마다 어떻게 바뀌었나?</td><td>평균</td></tr>
+        <tr><td>사례 연구</td><td>감정과 비유, 호칭, 말투, 영어 섞기, 가수별 특징은 어떠한가?</td><td>Log Ratio, 비율, 상대빈도*</td></tr>
+        <tr><td>AI 기반 노래 추천</td><td>문장이나 감정으로 어떤 노래를 찾을 수 있나?</td><td>코사인 유사도, 감정 강도 0–3</td></tr>
+      </tbody>
+    </table></div>
+    <p class="hint">* 상대빈도: 십만 어절당 빈도</p>
+  </div>
+  <details class="card method-box">
+    <summary><h2>방법</h2></summary>
+    <dl class="method">
+      <dt>자료</dt><dd>EX3exp/Kpop-lyric-datasets: 멜론 월간 차트 TOP100에 오른 곡의 가사와 정보(2000년 1월~2023년 10월). 차트 등장 25,876건, 고유 곡 8,250곡, 281개월. 연·월·순위는 파일 이름에서 읽었습니다. 곡 번호(song_id)가 없는 곡은 곡명과 가수로 구분했습니다. 장르가 여러 개 붙은 곡은 첫 번째 음악 장르를 대표 장르로 썼고, 국내드라마·국내영화·국외영화·애니메이션 장르는 OST로 묶었습니다. 시대는 2000년대(2000~2009), 2010년대(2010~2019), 2020년대(2020~2023)입니다.</dd>
+      <dt>가중치</dt><dd>차트 등장 1회를 1로 셉니다. 한 곡이 30개월 동안 차트에 있었다면 그 곡의 가사는 30번 반영됩니다. ‘곡 단위’라고 적힌 값만 곡마다 한 번씩 셉니다.</dd>
+      <dt>한국어 분석</dt><dd>Kiwi 0.22 형태소 분석기(세종 품사태그)를 쓰고, 파생 접사를 앞말과 합쳤습니다(JOIN_AFFIX: ‘사랑 해’ → 사랑하/VV, ‘깨끗해’ → 깨끗하/VA). 로마자 구간은 같은 길이의 공백으로 바꾼 뒤 분석해 위치를 유지했습니다. ‘라라’, ‘우우’ 같은 추임새 음절은 명사·부사·어근에서 뺐습니다. 단어 빈도는 내용어(NNG, NNP, NP, VV, VA, MAG, XR)를 기본형(용언은 ‘-다’)으로 셉니다. ‘간주중’ 같은 표시 행은 뺐습니다.</dd>
+      <dt>영어 분석</dt><dd>로마자 구간을 정규식으로 단어 단위로 나누고 소문자로 바꿨습니다(축약형 don’t 등은 한 단어). 품사는 NLTK 퍼셉트론 태거의 universal 태그(NOUN, VERB, ADJ 등)입니다. 한 글자 단어와 같은 음절을 되풀이한 말(na na 등)은 뺐습니다.</dd>
+      <dt>상대빈도*</dt><dd>상대빈도 = 절대빈도 ÷ 어절 수 × 100,000. 어절은 가사 행을 공백으로 나눈 단위이고, 분모와 분자 모두 같은 가중치(차트 등장)를 씁니다. 여러 시대·장르를 고르면 절대빈도와 어절 수를 각각 더한 뒤 나눕니다.</dd>
+      <dt>곡 비율</dt><dd>고른 범위(시대·장르)에 든 곡 가운데 그 말이 한 번이라도 나오는 곡의 비율(%)입니다.</dd>
+      <dt>N-gram</dt><dd>한국어는 형태소 2~5개 연쇄를 어미·조사·보조용언·부정소(안, 못, 않, 없, 말)까지 그대로 셉니다. 내용어·관형사·수사·보조용언으로 시작하고, 조사·어미·접사·서술격 조사로 끝나지 않는 것만 남깁니다. 영어가 끼거나 어절을 둘 이상 건너뛰면 끊습니다. 영어는 2~4단어 연쇄이고 기능어만으로 된 것은 뺍니다. 10곡 이상에 나오는 것 가운데 한국어 3,000개, 영어 1,395개입니다. 더 긴 N-gram에 거의 늘(90% 이상) 들어 있는 짧은 N-gram은 뺐습니다.</dd>
+      <dt>logDice</dt><dd>logDice = 14 + log₂(2 × f(xy) ÷ (f(x) + f(y))). 최댓값은 14이고, 값이 클수록 두 단위가 서로를 강하게 끌어당깁니다. N-gram에서는 이웃한 두 형태소 쌍마다 계산해 가장 작은 값을 씁니다.</dd>
+      <dt>핵심어</dt><dd>목표 말뭉치와 참조 말뭉치를 시대·장르로 고릅니다. LL(로그우도) = 2 × Σ O × ln(O ÷ E), 기대빈도 E는 두 말뭉치의 어절 수 비율로 나눕니다. 유의성 기준은 LL ≥ 3.84(p &lt; 0.05), 6.63(p &lt; 0.01), 10.83(p &lt; 0.001), 15.13(p &lt; 0.0001). Log Ratio = log₂(목표 상대빈도 ÷ 참조 상대빈도), 빈도가 0이면 0.5로 바꿉니다. Log Ratio 1은 2배, 2는 4배입니다.</dd>
+      <dt>공기어</dt><dd>가사 한 행을 공기 범위로 봅니다. 단어와 N-gram 모두 중심어·공기어가 될 수 있고, 5회 이상 함께 나온 것을 logDice로 정렬해 시기마다 25개까지 보여 줍니다. 같은 내용어를 공유하는 단위(사랑하다 ↔ 사랑하지 않)는 서로의 공기어에서 뺍니다. 중심어는 한국어 단어 상위 2,000개, 영어 단어 상위 800개, N-gram 전체입니다.</dd>
+      <dt>Cluster</dt><dd>자리(슬롯)마다 형태소와 품사태그 조건을 걸어 찾는 연쇄입니다. 비운 자리는 아무거나와 맞습니다. 5곡 이상에 나오는 연쇄(한국어 24,460개, 영어 5,337개)에서 찾습니다.</dd>
+      <dt>PoS-gram</dt><dd>한국어 형태소 품사태그 2~5개 연쇄와 영어 품사태그 2~5개 연쇄입니다. 20곡 이상에 나오는 것 가운데 한국어 2,500개, 영어 1,200개이고, 패턴마다 많이 나온 실현형 40개와 용례를 함께 둡니다.</dd>
+      <dt>시계열</dt><dd>연도별 상대빈도와 곡 비율을 그리고, 연도와 빈도의 스피어만 순위 상관(ρ, −1~1)으로 추세를 판정합니다. ρ가 1에 가까우면 해마다 꾸준히 늘고, −1에 가까우면 꾸준히 줄며, 0 근처면 일관된 방향이 없습니다. p &lt; 0.05이면 증가·감소, 아니면 뚜렷한 추세 없음으로 적습니다(p는 정규 근사). 점선은 최소제곱 직선 추세입니다. 정점 연도, 첫·마지막 등장 연도, 시대별 평균, 2000년대 대비 2020년대 Log Ratio를 함께 봅니다. 월별 가사 지표는 12개월 이동평균과 함께 그립니다.</dd>
+      <dt>비유</dt><dd>직유는 규칙으로 찾았습니다: 명사 + 처럼/같이/마냥, 명사 + 같다, 명사 + 인 듯, like (a) N, as A as (a) N. ‘지금처럼’, ‘어제처럼’ 같은 비교 표현과 ‘것 같다’(추측)는 뺐습니다. 은유는 LLM 에이전트(Claude Sonnet)가 곡마다 가사 전체를 읽고 MIP 절차(문맥 속 의미와 더 기본적인 의미가 대조되는 말 찾기)로 표현을 찾아 원관념·보조관념·유형(명사·동사·형용사·기타)과 관습적/창의적 여부를 붙였습니다. 찾은 표현 43,438개 가운데 실제 가사 행에 그대로 있는 43,402개만 썼고, 같은 곡 안의 같은 은유는 한 번만 셉니다. 빈도는 가사 1천 행당입니다.</dd>
+      <dt>시대 × 장르</dt><dd>시대와 장르 칸마다 곡 평균을 냅니다(차트 가중). 영어 비율은 로마자 글자 ÷ (로마자 + 한글) 글자, 반복도는 곡 안에서 되풀이되는 행의 비율, 어휘 다양도는 타입-토큰 비율(TTR)입니다. 30회 미만인 칸은 비워 둡니다.</dd>
+      <dt>사례 연구</dt><dd>감정 × 비유: 감정 강도가 2 이상인 곡과 나머지 곡에서 보조관념이 나오는 곡의 비율을 견줘 Log Ratio로 정렬합니다(8곡 이상). 은유 지식 그래프: 원관념 → 보조관념 관계를 곡 수로 이은 네트워크(상위 400개 관계, 시대는 곡이 처음 차트에 오른 해 기준). 대명사: 대명사(NP) 상위 14개의 연도별·장르별 상대빈도와 대명사 안에서의 몫. 종결 어미: 종결 어미(EF)를 해요체(-요), 하십시오체(-ㅂ니다), 해라체(-다, -라, -자, -냐 등), 해체(반말: -어, -아, -지, -야, -ㄹ까 등)로 나눈 비중. 한영 전환: 행을 한국어만·섞임·영어만으로 나누고, 행 안에서 한국어와 영어가 바뀌는 횟수(100행당)와 영어가 든 행의 곡 안 위치(다섯 구간)를 셉니다. 가수별 문체: 고유 곡 10곡 이상인 가수 241명의 영어 비율, 반복도, 어휘 다양도, 비유 밀도(1천 행당), 말투, 대명사 몫, 감정 평균.</dd>
+      <dt>감정</dt><dd>플루칙(Plutchik)의 감정 수레바퀴. LLM 에이전트(Claude Sonnet)가 곡마다 중복 행을 뺀 가사 전체를 읽고 8개 기본 감정(기쁨·신뢰·두려움·놀람·슬픔·혐오·분노·기대)의 강도를 0~3으로 매겼습니다. 강도 1·2·3은 수레바퀴의 바깥·가운데·안쪽 고리(예: 수심·슬픔·비탄)에, 이웃한 두 감정이 함께 2 이상이면 조합 감정(예: 기쁨+신뢰=사랑)에 대응합니다. 감정 태그는 강도별 감정 24개와 조합 감정 8개, 모두 32개입니다. 가사가 비어 있는 262곡은 감정 분석에서 뺐습니다(7,988곡).</dd>
+      <dt>AI 추천</dt><dd>곡마다 중복 행을 뺀 가사 전체를 다국어 문장 임베딩 모델 multilingual-e5-small(384차원, 최대 512토큰)로 벡터화했습니다. 검색 문장은 같은 모델(Xenova/multilingual-e5-small)이 브라우저에서 벡터로 바꾸고, 곡 벡터와 코사인 유사도를 계산합니다. 추천 점수 = 가사 의미 × 가중치 + 감정 일치 × 가중치 + 차트 성적 × 가중치. 가사 의미는 질의와의 코사인 유사도를 0~1로 맞춘 값, 감정 일치는 고른 감정의 강도(0~1), 차트 성적은 log(1 + 연도 보정 점수)를 0~1로 맞춘 값입니다. 비슷한 노래는 가사 의미(임베딩 코사인), 감정 프로필(8감정 벡터의 코사인), 어휘(TF-IDF 코사인과 감정을 반씩) 세 기준입니다. 가사 의미 지도는 임베딩을 PCA 50차원으로 줄인 뒤 t-SNE(perplexity 40)로 2차원에 펼쳤습니다.</dd>
+    </dl>
+  </details>
+</section>
+
+<!-- 곡 순위 -->
+<section id="top" class="tab">
+  <div class="card">
+    <h2>곡 순위</h2>
+    <div id="topDefs"></div>
+    <div class="row wrapgap" style="margin-top:10px">
+      <label class="lbl">정렬 <select id="topSort"></select></label>
+      <label class="lbl">처음 차트에 오른 해 <select id="topFrom"></select> ~ <select id="topTo"></select></label>
+      <label class="lbl">장르 <select id="topGenre"><option value="">전체</option></select></label>
+      <input id="topQ" placeholder="곡명·가수 검색">
+    </div>
+    <p class="hint" id="topInfo"></p>
+    <div class="tablebox" style="max-height:760px"><table class="tbl" id="topTbl"></table></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2>연도별 차트 곡 수</h2><div id="topTurn" class="chart"></div></div>
+    <div class="card"><h2>데뷔 연도별 평균 차트 개월 수</h2><div id="topLife" class="chart"></div></div>
+    <div class="card"><h2>연도별 1위·TOP10 곡 수</h2><div id="topNo1" class="chart"></div></div>
+    <div class="card"><h2>연도별 TOP10 장르 비중</h2><div id="topGenreY" class="chart"></div></div>
+  </div>
+  <div class="card"><h2>가수 차트 점수 TOP 30</h2><div id="topArt" class="chart" style="height:720px"></div></div>
+</section>
+
+<!-- 빈도 -->
+<section id="freq" class="tab">
+  <div class="card">
+    <div id="frSrc"></div>
+    <div id="frA" class="subbox"></div>
+    <label class="cmpchk"><input type="checkbox" id="frCmp"> 비교</label>
+    <div id="frB" class="subbox" hidden></div>
+    <div class="row wrapgap" style="margin-top:10px">
+      <input id="frQ" placeholder="항목 검색">
+      <div id="frPos" class="chips pos" style="margin:0"></div>
+      <label class="lbl">정렬 <select id="frSortA"><option value="a">분석 대상 상대빈도</option><option value="as">분석 대상 곡 비율</option><option value="b">비교 대상 상대빈도</option><option value="bs">비교 대상 곡 비율</option><option value="lr">Log Ratio 큰 순 (분석 대상 쪽)</option><option value="lrn">Log Ratio 작은 순 (비교 대상 쪽)</option></select></label>
+      <span id="frSortB" hidden></span>
+    </div>
+    <p class="hint" id="frInfo"></p>
+    <div class="grid-main">
+      <div class="tablebox"><table class="tbl" id="frTbl"><thead></thead><tbody></tbody></table></div>
+      <aside class="side" id="frSide"></aside>
+    </div>
+  </div>
+  <div class="card chcard" id="frCH" hidden></div>
+  <div class="card tscard" id="frTS" hidden></div>
+</section>
+
+<!-- Cluster -->
+<section id="clu" class="tab">
+  <div class="card">
+    <div class="row wrapgap">
+      <div class="seg" id="cluLang"><button data-v="ko" class="on">한국어</button><button data-v="en">영어</button></div>
+      <div class="seg" id="cluN"><button data-v="2">n=2</button><button data-v="3" class="on">n=3</button><button data-v="4">n=4</button><button data-v="5">n=5</button></div>
+      <button id="cluGo" class="primary">집계</button>
+    </div>
+    <div class="slots" id="cluSlots"></div>
+    <div id="cluScope"></div>
+    <p class="hint" id="cluInfo"></p>
+    <div class="grid-main">
+      <div class="tablebox"><table class="tbl" id="cluTbl"><thead></thead><tbody></tbody></table></div>
+      <aside class="side" id="cluSide"></aside>
+    </div>
+  </div>
+  <div class="card chcard" id="cluCH" hidden></div>
+  <div class="card tscard" id="cluTS" hidden></div>
+</section>
+
+<!-- POS-gram -->
+<section id="pos" class="tab">
+  <div class="card">
+    <div class="row wrapgap">
+      <div class="seg" id="pgLang"><button data-v="ko" class="on">한국어</button><button data-v="en">영어</button></div>
+      <div class="seg" id="pgN"><button data-v="2">n=2</button><button data-v="3" class="on">n=3</button><button data-v="4">n=4</button><button data-v="5">n=5</button></div>
+      <button id="pgGo" class="primary">집계</button>
+    </div>
+    <div class="slots" id="pgSlots"></div>
+    <div id="pgScope"></div>
+    <p class="hint" id="pgInfo"></p>
+    <div class="grid-main">
+      <div class="tablebox"><table class="tbl" id="pgTbl"><thead></thead><tbody></tbody></table></div>
+      <aside class="side" id="pgSide"></aside>
+    </div>
+  </div>
+  <div class="card chcard" id="pgCH" hidden></div>
+  <div class="card tscard" id="pgTS" hidden></div>
+</section>
+
+<!-- 핵심어 -->
+<section id="kw" class="tab">
+  <div class="card">
+    <div id="kwSrc"></div>
+    <div id="kwT" class="subbox"></div>
+    <div id="kwR" class="subbox"></div>
+    <div class="row wrapgap" style="margin-top:10px">
+      <div class="seg" id="kwSide2"><button data-v="target" class="on">목표 말뭉치 핵심어</button><button data-v="ref">참조 말뭉치 핵심어</button></div>
+      <label class="lbl">유의성 (LL) <select id="kwSig"><option value="0">전체</option><option value="3.84">p &lt; 0.05</option><option value="6.63">p &lt; 0.01</option><option value="10.83">p &lt; 0.001</option><option value="15.13" selected>p &lt; 0.0001</option></select></label>
+      <label class="lbl">최소 빈도 <select id="kwMin"><option>3</option><option selected>5</option><option>10</option><option>20</option><option>50</option></select></label>
+      <label class="lbl">정렬 <select id="kwSort"><option value="ll">LL</option><option value="lr">Log Ratio</option></select></label>
+      <div id="kwPos" class="chips pos" style="margin:0"></div>
+    </div>
+    <p class="hint" id="kwInfo"></p>
+    <div class="grid-main">
+      <div class="tablebox"><table class="tbl" id="kwTbl"><thead><tr><th class="num">순위</th><th>핵심어</th><th>품사태그</th><th class="num">목표 말뭉치<br>상대빈도*</th><th class="num">참조 말뭉치<br>상대빈도*</th><th class="num">LL</th><th class="num">Log Ratio</th></tr></thead><tbody></tbody></table></div>
+      <aside class="side" id="kwSidePanel"></aside>
+    </div>
+  </div>
+  <div class="card chcard" id="kwCH" hidden></div>
+  <div class="card tscard" id="kwTS" hidden></div>
+</section>
+
+<!-- N-gram -->
+<section id="mwe" class="tab">
+  <div class="card">
+    <div class="row wrapgap">
+      <div class="seg" id="mweLang"><button data-v="ko" class="on">한국어</button><button data-v="en">영어</button></div>
+      <div class="seg" id="mweN"><button data-v="2" class="on">n=2</button><button data-v="3">n=3</button><button data-v="4">n=4</button><button data-v="5">n=5</button></div>
+      <button id="mweGo" class="primary">집계</button>
+    </div>
+    <div class="slots" id="mweSlots"></div>
+    <div id="mweScope"></div>
+    <p class="hint" id="mweInfo"></p>
+    <div class="grid-main">
+      <div class="tablebox"><table class="tbl" id="mweTbl"><thead></thead><tbody></tbody></table></div>
+      <aside class="side" id="mweSide"></aside>
+    </div>
+  </div>
+  <div class="card chcard" id="mweCH" hidden></div>
+  <div class="card tscard" id="mweTS" hidden></div>
+</section>
+
+<!-- 공기어 -->
+<section id="col" class="tab">
+  <div class="card">
+    <div id="colNode"></div>
+    <div class="row wrapgap" style="margin-top:10px">
+      <span class="lbl">시대</span><div class="seg" id="colPeriod"></div>
+      <div class="seg" id="colType"><button data-v="all" class="on">공기어 전체</button><button data-v="word">단어만</button><button data-v="ng">N-gram만</button></div>
+      <div class="chips pos" id="colPos" style="margin:0"></div>
+    </div>
+    <div class="grid-main">
+      <div id="colChart" class="chart xtall"></div>
+      <aside class="side" id="colSide"></aside>
+    </div>
+  </div>
+  <div class="card chcard" id="colCH" hidden></div>
+  <div class="card tscard" id="colTS" hidden></div>
+  <div class="card">
+    <h2>시대별 공기어 비교</h2>
+    <div class="tablebox"><table class="tbl compare" id="colCompare"></table></div>
+  </div>
+</section>
+
+<!-- 비유 표현 -->
+<section id="fig" class="tab">
+  <div class="card">
+    <div class="row between">
+      <h2>시대별 보조관념 <span class="unit">(1천 행당)</span></h2>
+      <div class="seg" id="fgHeatType"><button data-v="sim|ko" class="on">직유 · 한국어</button><button data-v="sim|en">직유 · 영어</button><button data-v="met|ko">은유 · 한국어</button><button data-v="met|en">은유 · 영어</button></div>
+    </div>
+    <div id="figHeat" class="chart" style="height:900px"></div>
+  </div>
+  <div class="card">
+    <div class="row wrapgap">
+      <div class="seg" id="fgType"><button data-v="sim|ko" class="on">직유 · 한국어</button><button data-v="sim|en">직유 · 영어</button><button data-v="met|ko">은유 · 한국어</button><button data-v="met|en">은유 · 영어</button></div>
+      <input id="fgQ" placeholder="검색">
+    </div>
+    <div class="grid-main">
+      <div class="tablebox"><table class="tbl" id="fgTbl"><thead><tr><th>원관념</th><th>보조관념</th><th>표현</th><th>표지·유형</th><th class="num">1천 행당</th><th class="num">곡 비율</th><th class="num">정점</th></tr></thead><tbody></tbody></table></div>
+      <aside class="side" id="fgSide"></aside>
+    </div>
+  </div>
+  <div class="card chcard" id="fgCH" hidden></div>
+  <div class="card tscard" id="fgTS" hidden></div>
+</section>
+
+<!-- 시대 × 장르 -->
+<section id="eg" class="tab">
+  <div class="card">
+    <div class="row between">
+      <h2>시대 × 장르 지표</h2>
+      <select id="egMeasure">
+        <option value="en_ratio">영어 비율</option>
+        <option value="repetition">반복도</option>
+        <option value="tokens">곡당 토큰 수</option>
+        <option value="ttr">어휘 다양도 (TTR)</option>
+        <option value="n">차트 등장 수</option>
+      </select>
+    </div>
+    <div class="grid-main">
+      <div id="egChart" class="chart tall"></div>
+      <aside class="side" id="egSide"></aside>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row between">
+      <h2>가사 지표의 월별 변화</h2>
+      <select id="mMeasure">
+        <option value="en_ratio">영어 비율 (로마자 / 전체 글자)</option>
+        <option value="repetition">반복도 (중복 행 비율)</option>
+        <option value="tokens">곡당 토큰 수</option>
+        <option value="lines">곡당 행 수</option>
+        <option value="ttr">어휘 다양도 (TTR)</option>
+      </select>
+    </div>
+    <div id="mChart" class="chart"></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2>연도별 감정 강도 <span class="unit">(플루칙 8감정, 평균 0–3)</span></h2><div id="emoYear" class="chart tall"></div></div>
+    <div class="card"><h2>연도별 장르 비중</h2><div id="genreYear" class="chart tall"></div></div>
+  </div>
+</section>
+
+<!-- 사례 연구 -->
+<section id="case" class="tab">
+  <div class="card"><div class="seg" id="csNav">
+    <button data-v="emo" class="on">감정 × 비유</button><button data-v="graph">은유 지식 그래프</button><button data-v="pron">대명사</button>
+    <button data-v="end">종결 어미·말투</button><button data-v="cs">한영 전환</button><button data-v="art">가수별 문체</button>
+  </div></div>
+  <div id="csBody"></div>
+</section>
+
+<!-- AI 기반 노래 추천 -->
+<section id="rec" class="tab">
+  <div class="card">
+    <h2>문장으로 찾기</h2>
+    <div class="row wrapgap"><textarea id="aiQ" rows="2" placeholder="어떤 노래를 찾나요?"></textarea>
+      <div class="col-btns"><button id="aiGo" class="primary">찾기</button><button id="aiClear">지우기</button></div></div>
+    <p class="hint" id="aiStatus"></p>
+  </div>
+  <div class="card">
+    <h2>감정으로 찾기</h2>
+    <div id="wheel" class="chart wheel"></div>
+    <div class="chips" id="recSel"></div>
+    <div class="row wrapgap filters">
+      <label>시대 <select id="recEra"><option value="">전체</option></select></label>
+      <label>장르 <select id="recGenre"><option value="">전체</option></select></label>
+      <input id="recQ" placeholder="곡명·가수 검색">
+    </div>
+    <div class="row wrapgap weights">
+      <span class="lbl">추천 점수 가중치</span>
+      <label>가사 의미 <input type="range" id="wSem" min="0" max="100" value="70"></label>
+      <label>감정 <input type="range" id="wEmo" min="0" max="100" value="50"></label>
+      <label>차트 성적 <input type="range" id="wPop" min="0" max="100" value="20"></label>
+      <span class="hint" id="wInfo"></span>
+    </div>
+  </div>
+  <div class="grid-main rec">
+    <div class="card"><h2 id="recCount">추천 곡</h2><ol class="songs" id="recList"></ol></div>
+    <div class="card" id="recDetailCard"><div id="recDetail"></div></div>
+  </div>
+  <div class="card">
+    <div class="row between"><h2>가사 의미 지도</h2>
+      <label class="lbl">색 <select id="mapColor"><option value="era">시대</option><option value="genre">장르</option><option value="emo">가장 강한 감정</option></select></label></div>
+    <div class="grid-main"><div id="embMap" class="chart" style="height:640px"></div><aside class="side" id="mapSide"></aside></div>
+  </div>
+</section>
+
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button class="modal-x" id="modalX" aria-label="닫기">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
