@@ -228,3 +228,5 @@ details.method-box[open] > summary { margin-bottom: 12px; }
 .songhits li q { font-size: 14px; }
 .slotmark { color: var(--accent); }
 .cx { font-family: "Noto Serif KR", serif; }
+#cxTbl td.fills { white-space: normal; min-width: 260px; color: var(--ink2); }
+#cxTbl td.cx { white-space: nowrap; }

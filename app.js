@@ -1629,9 +1629,9 @@ async function initCx() {
     $("#cxInfo").textContent = `${rows.length.toLocaleString()}개 | ${PMW_NOTE}`;
     $("#cxTbl tbody").innerHTML = rows.slice(0, 1000).map(([r, i], k) => {
       const rel = r.year.reduce((a, b) => a + b, 0) / r.year.length;
-      return `<tr data-i="${i}"><td class="num">${k + 1}</td><td class="cx">${esc(r.label).replace(/＿/g, `<b class="slotmark">＿</b>`)}</td><td>${esc(slotName(r.slot))}</td>
-        <td class="num">${rel.toFixed(2)}</td><td class="num">${(r.songs / D.meta.n_songs * 100).toFixed(2)}%</td><td class="num">${r.types}</td><td class="num">${r.prod}</td>
-        <td>${r.fills.slice(0, 5).map(([f]) => esc(f)).join(", ")}</td></tr>`;
+      return `<tr data-i="${i}"><td class="num">${k + 1}</td><td class="cx">${esc(r.label).replace(/＿/g, `<b class="slotmark">＿</b>`)}</td>
+        <td class="fills">${r.fills.slice(0, 10).map(([f]) => esc(f)).join(", ")}</td><td>${esc(slotName(r.slot))}</td>
+        <td class="num">${rel.toFixed(2)}</td><td class="num">${(r.songs / D.meta.n_songs * 100).toFixed(2)}%</td><td class="num">${r.types}</td><td class="num">${r.prod}</td></tr>`;
     }).join("") || `<tr><td colspan="8" class="hint">결과가 없습니다.</td></tr>`;
     $("#cxTbl tbody").querySelectorAll("tr[data-i]").forEach((tr) => (tr.onclick = () => {
       $("#cxTbl tbody").querySelectorAll("tr").forEach((x) => x.classList.toggle("sel", x === tr));
