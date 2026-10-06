@@ -54,7 +54,7 @@
         <tr><td>핵심어</td><td>특정 시대·장르에서 유난히 많이 쓰인 말은 무엇인가?</td><td>LL, Log Ratio</td></tr>
         <tr><td>공기어</td><td>한 줄 안에서 어떤 말이 함께 나오나?</td><td>logDice</td></tr>
         <tr><td>Cluster</td><td>원하는 자리에 원하는 말이 든 표현은 무엇인가?</td><td>상대빈도*, 곡 비율</td></tr>
-        <tr><td>구문</td><td>‘널 향한 내 ＿’, ‘＿ 따윈 필요 없어’ 같은 긴 빈칸 틀에 어떤 말이 들어가나?</td><td>상대빈도*, 곡 비율, 타입 수, 생산성, 결합 강도(LL)</td></tr>
+        <tr><td>구문</td><td>‘널 향한 내 ＿’, ‘＿ 따윈 필요 없어’ 같은 긴 빈칸 틀에 어떤 말이 들어가나?</td><td>상대빈도*, 곡 비율, 타입 수, 결합 강도(LL)</td></tr>
         <tr><td>PoS-gram</td><td>품사는 어떤 패턴으로 이어지나?</td><td>상대빈도*, 곡 비율</td></tr>
         <tr><td>비유 표현</td><td>‘~처럼’, ‘A는 B다’ 같은 비유는 어떻게 바뀌었나?</td><td>가사 1천 행당, 곡 비율</td></tr>
         <tr><td>시대 × 장르</td><td>시대와 장르마다 가사가 어떻게 다르고, 해마다 어떻게 바뀌었나?</td><td>평균</td></tr>
@@ -79,7 +79,7 @@
       <dt>공기어</dt><dd>가사 한 행을 공기 범위로 봅니다. 단어와 N-gram 모두 중심어·공기어가 될 수 있고, 5회 이상 함께 나온 것을 logDice로 정렬해 시기마다 25개까지 보여 줍니다. 같은 내용어를 공유하는 단위(사랑하다 ↔ 사랑하지 않)는 서로의 공기어에서 뺍니다. 중심어는 한국어 단어 상위 2,000개, 영어 단어 상위 800개, N-gram 전체입니다.</dd>
       <dt>Cluster</dt><dd>자리(슬롯)마다 형태소와 품사태그 조건을 걸어 찾는 연쇄입니다. 비운 자리는 아무거나와 맞습니다. 5곡 이상에 나오는 연쇄(한국어 24,460개, 영어 5,337개)에서 찾습니다.</dd>
       <dt>PoS-gram</dt><dd>한국어 형태소 품사태그 2~5개 연쇄와 영어 품사태그 2~5개 연쇄입니다. 20곡 이상에 나오는 것 가운데 한국어 2,500개, 영어 1,200개이고, 패턴마다 많이 나온 실현형 40개와 용례를 함께 둡니다.</dd>
-      <dt>구문</dt><dd>형태소 5~8개, 어절 4개 이상에 걸친 연쇄에서 내용어 한 자리를 품사 빈칸으로 바꾼 틀(구문 스키마)입니다. 빈칸이나 자립하는 말로 시작하고, 고정된 부분에 어미·조사가 아닌 말이 둘 이상 있으며, 연결 어미·관형형 어미·조사로 끝나지 않는 틀만 남깁니다. 을/를/ㄹ, 은/는/ㄴ, 이/가, 어/아, 었/았 같은 이형태는 하나로 묶습니다. 8회·6곡 이상, 빈칸 타입 4개 이상. 겹치는 틀은 최장 일치만 남기고, 대명사·부사만 다른 변이는 같은 뼈대마다 3개까지 둡니다. 타입 수 = 빈칸에 들어간 서로 다른 말의 수, 생산성 = 한 번만 나온 채움말 수 ÷ 틀 빈도(Baayen의 P), 결합 강도 = 채움말이 그 틀에 끌리는 정도(2×2 LL, Stefanowitsch &amp; Gries의 공연어휘 분석).</dd>
+      <dt>구문</dt><dd>형태소 5~8개, 어절 4개 이상에 걸친 연쇄에서 내용어 한 자리를 품사 빈칸으로 바꾼 틀(구문 스키마)입니다. 빈칸이나 자립하는 말로 시작하고, 고정된 부분에 어미·조사가 아닌 말이 둘 이상 있으며, 연결 어미·관형형 어미·조사로 끝나지 않는 틀만 남깁니다. 을/를/ㄹ, 은/는/ㄴ, 이/가, 어/아, 었/았 같은 이형태는 하나로 묶습니다. 8회·6곡 이상, 빈칸 타입 4개 이상. 겹치는 틀은 최장 일치만 남기고, 대명사·부사만 다른 변이는 같은 뼈대마다 3개까지 둡니다. 타입 수 = 빈칸에 들어간 서로 다른 말의 수, 결합 강도 = 채움말이 그 틀에 끌리는 정도(2×2 LL, Stefanowitsch &amp; Gries의 공연어휘 분석).</dd>
       <dt>시계열</dt><dd>연도별 상대빈도와 곡 비율을 그리고, 연도와 빈도의 스피어만 순위 상관(ρ, −1~1)으로 추세를 판정합니다. ρ가 1에 가까우면 해마다 꾸준히 늘고, −1에 가까우면 꾸준히 줄며, 0 근처면 일관된 방향이 없습니다. p &lt; 0.05이면 증가·감소, 아니면 뚜렷한 추세 없음으로 적습니다(p는 정규 근사). 점선은 최소제곱 직선 추세입니다. 정점 연도, 첫·마지막 등장 연도, 시대별 평균, 2000년대 대비 2020년대 Log Ratio를 함께 봅니다. 월별 가사 지표는 12개월 이동평균과 함께 그립니다.</dd>
       <dt>비유</dt><dd>직유는 규칙으로 찾았습니다: 명사 + 처럼/같이/마냥, 명사 + 같다, 명사 + 인 듯, like (a) N, as A as (a) N. ‘지금처럼’, ‘어제처럼’ 같은 비교 표현과 ‘것 같다’(추측)는 뺐습니다. 은유는 LLM 에이전트(Claude Sonnet)가 곡마다 가사 전체를 읽고 MIP 절차(문맥 속 의미와 더 기본적인 의미가 대조되는 말 찾기)로 표현을 찾아 원관념·보조관념·유형(명사·동사·형용사·기타)과 관습적/창의적 여부를 붙였습니다. 찾은 표현 43,438개 가운데 실제 가사 행에 그대로 있는 43,402개만 썼고, 같은 곡 안의 같은 은유는 한 번만 셉니다. 빈도는 가사 1천 행당입니다.</dd>
       <dt>시대 × 장르</dt><dd>시대와 장르 칸마다 곡 평균을 냅니다(차트 가중). 영어 비율은 로마자 글자 ÷ (로마자 + 한글) 글자, 반복도는 곡 안에서 되풀이되는 행의 비율, 어휘 다양도는 타입-토큰 비율(TTR)입니다. 30회 미만인 칸은 비워 둡니다.</dd>
@@ -248,12 +248,12 @@
       <span class="lbl">빈칸</span>
       <div class="seg" id="cxSlot"><button data-v="" class="on">전체</button><button data-v="NNG">일반명사</button><button data-v="NP">대명사</button><button data-v="VV">동사</button><button data-v="VA">형용사</button><button data-v="MAG">부사</button></div>
       <span class="lbl">정렬</span>
-      <div class="seg" id="cxSort"><button data-v="types" class="on">타입 수</button><button data-v="tok">빈도</button><button data-v="prod">생산성</button></div>
+      <div class="seg" id="cxSort"><button data-v="types" class="on">타입 수</button><button data-v="tok">빈도</button></div>
       <input id="cxQ" placeholder="틀·채움말 검색">
     </div>
     <p class="hint" id="cxInfo"></p>
     <div class="grid-main">
-      <div class="tablebox"><table class="tbl" id="cxTbl"><thead><tr><th class="num">순위</th><th>틀</th><th>채움말</th><th>빈칸</th><th class="num">상대빈도*</th><th class="num">곡 비율</th><th class="num">타입 수</th><th class="num">생산성</th></tr></thead><tbody></tbody></table></div>
+      <div class="tablebox"><table class="tbl" id="cxTbl"><thead><tr><th class="num">순위</th><th>틀</th><th>채움말</th><th>빈칸</th><th class="num">상대빈도*</th><th class="num">곡 비율</th><th class="num">타입 수</th></tr></thead><tbody></tbody></table></div>
       <aside class="side" id="cxSide"></aside>
     </div>
   </div>
