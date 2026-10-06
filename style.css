@@ -233,3 +233,6 @@ details.method-box[open] > summary { margin-bottom: 12px; }
 #cxTbl td.fills i { font-style: normal; font-size: 12px; color: var(--ink2); opacity: .8; }
 .srcbadge { display: inline-block; vertical-align: middle; margin-left: 12px; font: 500 13px/1.4 "Noto Sans KR", sans-serif; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink2); text-decoration: none; }
 .srcbadge:hover { color: var(--accent); border-color: var(--accent); }
+.songhits { max-height: 460px; overflow: auto; padding-right: 4px; }
+#topTbl th { white-space: normal; min-width: 64px; }
+.tablebox { max-width: 100%; }

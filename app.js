@@ -4,7 +4,7 @@ const charts = {};                  // echarts 인스턴스
 const $ = (s) => document.querySelector(s);
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const MELON = (id, t = "", a = "") => id.startsWith("x") ? `https://www.melon.com/search/total/index.htm?q=${encodeURIComponent(t + " " + a)}` : `https://www.melon.com/song/detail.htm?songId=${id}`;
-const PALETTE = ["#c2410c", "#1d4ed8", "#15803d", "#7c3aed", "#b45309", "#0e7490", "#be185d", "#4d7c0f", "#6b7280", "#9333ea", "#0369a1"];
+const PALETTE = ["#c2410c", "#1d4ed8", "#15803d", "#7c3aed", "#ca8a04", "#0e7490", "#be185d", "#65a30d", "#64748b", "#db2777", "#0369a1"];
 // 플루칙 감정 수레바퀴 (시계 방향 순서)
 const EMOS = ["기쁨", "신뢰", "두려움", "놀람", "슬픔", "혐오", "분노", "기대"];
 const EMO_COLORS = ["#f5c400", "#7cb342", "#2e7d32", "#0ea5e9", "#1d4ed8", "#8e24aa", "#e53935", "#f57c00"];
@@ -24,8 +24,24 @@ async function load(name) {
   if (!D[name]) D[name] = await (await fetch(`data/${name}.json`)).json();
   return D[name];
 }
+// 범례가 축 눈금과 겹치지 않게: 범례는 한 줄(넘치면 넘겨 보기), 범례 쪽 여백 확보
+function fixLegend(o) {
+  if (!o || !o.legend || o.legend.show === false) return o;
+  o.legend.type = "scroll";
+  if (o.legend.bottom !== undefined) {
+    if (o.grid) o.grid.bottom = Math.max(o.grid.bottom || 0, 66);
+    if (o.radar) { o.radar.center = ["50%", "45%"]; o.radar.radius = "58%"; }
+  }
+  if (o.legend.top !== undefined && o.grid) o.grid.top = Math.max(o.grid.top || 0, 38);
+  return o;
+}
 function chart(id) {
-  if (!charts[id]) charts[id] = echarts.init(document.getElementById(id), null, { renderer: "canvas" });
+  if (!charts[id]) {
+    const c = echarts.init(document.getElementById(id), null, { renderer: "canvas" });
+    const set = c.setOption.bind(c);
+    c.setOption = (o, ...rest) => set(fixLegend(o), ...rest);
+    charts[id] = c;
+  }
   return charts[id];
 }
 window.addEventListener("resize", () => Object.values(charts).forEach((c) => c.resize()));
@@ -1198,7 +1214,7 @@ async function initCase() {
         const d = C.emo_fig[i], top = d.top.slice(0, 20);
         chart("csEmoChart").setOption({
           tooltip: { formatter: (p) => `${esc(top[p.dataIndex][0])}<br>곡 수 ${top[p.dataIndex][1]}<br>Log Ratio ${top[p.dataIndex][3]}` },
-          grid: { left: 110, right: 40, top: 8, bottom: 24 }, xAxis: { type: "value", name: "Log Ratio", ...axisStyle() },
+          grid: { left: 110, right: 40, top: 8, bottom: 40 }, xAxis: { type: "value", name: "Log Ratio", nameLocation: "middle", nameGap: 26, ...axisStyle(), nameTextStyle: baseText() },
           yAxis: { type: "category", data: top.map((r) => r[0]), inverse: true, ...axisStyle() },
           series: [{ type: "bar", data: top.map((r) => r[3]), itemStyle: { color: EMO_COLORS[i] } }],
         }, true);
@@ -1352,7 +1368,7 @@ async function initCase() {
         }, true);
         chart("csAScatter").setOption({
           tooltip: { formatter: (p) => `${esc(p.data.name)}<br>영어 ${p.data.value[0]}% · 반복도 ${p.data.value[1]}%` },
-          grid: { left: 50, right: 16, top: 12, bottom: 40 },
+          grid: { left: 50, right: 16, top: 34, bottom: 40 },
           xAxis: { type: "value", name: "영어 비율 %", nameLocation: "middle", nameGap: 26, ...axisStyle() }, yAxis: { type: "value", name: "반복도 %", ...axisStyle() },
           series: [{ type: "scatter", symbolSize: (v, p) => 4 + Math.sqrt(p.data.songs) * 1.5,
             data: list.map((a) => ({ name: a.name, songs: a.songs, value: [a.en, a.rep], itemStyle: { color: sel.includes(a.name) ? PALETTE[sel.indexOf(a.name)] : css("--ink2"), opacity: sel.includes(a.name) ? 1 : 0.35 } })) }],
@@ -1649,7 +1665,7 @@ async function initCx() {
       <p class="hint">빈도 ${r.tok.toLocaleString()} · 타입 ${r.types}</p>
       <h3>빈칸에 끌리는 말 <span class="unit">(결합 강도 LL 순)</span></h3>
       <table class="tbl"><thead><tr><th>채움말</th><th class="num">빈도</th><th class="num">비율</th><th class="num">LL</th></tr></thead><tbody>${fills.map(([f, c, ll]) => `<tr data-f="${esc(f)}"><td>${esc(f)}</td><td class="num">${c}</td><td class="num">${Math.round(c / r.tok * 100)}%</td><td class="num">${ll}</td></tr>`).join("")}</tbody></table>
-      <h3>시대별 채움말</h3><table class="tbl compare"><thead><tr>${D.meta.eras.map((e) => `<th>${e}</th>`).join("")}</tr></thead><tbody><tr>${r.era.map((col) => `<td>${col.slice(0, 10).map(([f, c]) => `<span>${esc(f)} <i class="ptag">${c}</i></span><br>`).join("")}</td>`).join("")}</tr></tbody></table>
+      <h3>시대별 채움말</h3><div class="tablebox"><table class="tbl compare"><thead><tr>${D.meta.eras.map((e) => `<th>${e}</th>`).join("")}</tr></thead><tbody><tr>${r.era.map((col) => `<td>${col.slice(0, 10).map(([f, c]) => `<span>${esc(f)} <i class="ptag">${c}</i></span><br>`).join("")}</td>`).join("")}</tr></tbody></table></div>
       <div class="songbox"></div>`;
     const re = cxRe(r);
     songListInto(el.querySelector(".songbox"), { title: "이 틀이 나오는 곡", re });
