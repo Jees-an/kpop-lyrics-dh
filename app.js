@@ -1660,6 +1660,37 @@ async function initCx() {
       songListInto(el.querySelector(".songbox"), { title: `‘${f}’ 자리의 곡`, re: fr });
     }));
     tsPanel($("#cxTS"), r.label, r.year, r.ycov);
+    fillerChange(r);
+  };
+  // 틀 안 채움말의 변화: 시대별 몫(합 100%)과 연도별 몫의 추세
+  const fillerChange = (r) => {
+    const card = $("#cxFill"), Y = D.meta.years, eras = D.meta.eras, yf = r.yfill;
+    if (!yf || !yf.fills.length) { card.hidden = true; return; }
+    card.hidden = false;
+    const eraIdx = eras.map((e) => { const a = parseInt(e, 10); return Y.map((y, i) => [y, i]).filter(([y]) => y >= a && y <= a + 9).map(([, i]) => i); });
+    const eraTot = eraIdx.map((ix) => ix.reduce((t, i) => t + yf.total[i], 0));
+    const share = yf.fills.map((f, j) => eraIdx.map((ix, e) => eraTot[e] ? ix.reduce((t, i) => t + yf.counts[j][i], 0) / eraTot[e] * 100 : 0));
+    const other = eras.map((_, e) => Math.max(0, 100 - share.reduce((t, row) => t + row[e], 0)));
+    const ys = yf.fills.map((f, j) => yf.total.map((t, i) => (t ? yf.counts[j][i] / t * 100 : null)));
+    const rows = yf.fills.map((f, j) => {
+      const pts = ys[j].map((v, i) => [Y[i], v]).filter(([, v]) => v !== null);
+      const t = pts.length >= 4 ? spearman(pts.map((p) => p[0]), pts.map((p) => p[1])) : { rho: 0, p: 1 };
+      const a = share[j][0], b = share[j][eras.length - 1];
+      return { f, s: share[j], t, ratio: a ? b / a : (b ? Infinity : 1) };
+    });
+    if (charts.cxFillChart) { charts.cxFillChart.dispose(); delete charts.cxFillChart; }
+    card.innerHTML = `<h2>채움말의 변화: ${esc(r.label)}</h2>
+      <div class="grid2"><div id="cxFillChart" class="chart"></div>
+      <div class="tablebox"><table class="tbl"><thead><tr><th>채움말</th>${eras.map((e) => `<th class="num">${e}</th>`).join("")}<th class="num">변화</th><th>추세</th></tr></thead>
+      <tbody>${rows.map((x) => `<tr><td>${esc(x.f)}</td>${x.s.map((v) => `<td class="num">${Math.round(v)}%</td>`).join("")}
+        <td class="num">${!x.s[0] && !x.s[x.s.length - 1] ? "-" : !x.s[0] ? "새로 등장" : !x.s[x.s.length - 1] ? "사라짐" : x.ratio.toFixed(1) + "배"}</td><td>${x.t.p < 0.05 ? (x.t.rho > 0 ? "▲ 증가" : "▼ 감소") : "-"}</td></tr>`).join("")}</tbody></table></div></div>`;
+    chart("cxFillChart").setOption({
+      color: PALETTE, tooltip: { trigger: "axis", valueFormatter: (v) => Math.round(v) + "%" }, legend: { type: "scroll", bottom: 0, textStyle: baseText() },
+      grid: { left: 44, right: 12, top: 10, bottom: 50 }, xAxis: { type: "category", data: eras, ...axisStyle() },
+      yAxis: { type: "value", max: 100, ...axisStyle(), axisLabel: { ...baseText(), formatter: "{value}%" } },
+      series: [...yf.fills.map((f, j) => ({ name: f, type: "bar", stack: "s", data: share[j].map((v) => +v.toFixed(1)) })),
+               { name: "그 밖의 말", type: "bar", stack: "s", data: other.map((v) => +v.toFixed(1)), itemStyle: { color: css("--line") } }],
+    }, true);
   };
   seg("#cxSlot", (v) => { slot = v; draw(); });
   seg("#cxSort", (v) => { sortK = v; draw(); });
