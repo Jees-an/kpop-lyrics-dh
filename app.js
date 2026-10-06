@@ -155,9 +155,10 @@ async function termPanel(el, key, extra = "") {
   const s = D.series.series[key];
   const trend = s ? `<p class="hint">상대빈도* ${(s[0] / D.meta.tok_total * D.meta.pmw).toFixed(2)} · 정점 ${s[2]}년 · 추세 ρ=${s[1]}</p>` : "";
   el.innerHTML = `<h3>${esc(label(key))} ${langTag(key)} ${ptag(key)}</h3>${extra}${trend}<div class="mini"></div>
-    <div class="distbox"></div>${examplesHTML(key)}`;
+    <div class="distbox"></div><div class="songbox"></div>`;
   miniSeries(el.querySelector(".mini"), key);
   distCharts(el.querySelector(".distbox"), key);
+  songListInto(el.querySelector(".songbox"), { re: surfaceRegex(key) });
 }
 
 // ---------- 탭 ----------
@@ -232,7 +233,12 @@ async function initEG() {
   chart("egChart").on("click", (p) => {
     const g = genres[p.value[1]], e = eras[p.value[0]], c = D.eg[`${g}|${e}`];
     const side = $("#egSide");
-    side.innerHTML = `<h3>${g} · ${e}</h3><p class="hint">차트 등장 수 ${c.n} · 점선: 시대 평균</p><div class="mini" style="height:320px"></div>`;
+    side.innerHTML = `<h3>${g} · ${e}</h3><p class="hint">차트 등장 수 ${c.n} · 점선: 시대 평균</p><div class="mini" style="height:320px"></div><div class="songbox"></div>`;
+    loadAllLyrics().then((L) => {
+      const a = parseInt(e, 10);
+      const hits = D.songs.map((x, i) => [x, i]).filter(([x]) => x[6] === g && x[3] >= a && x[3] <= a + 9).map(([, i]) => [i, L[i][0] || ""]);
+      songListInto(side.querySelector(".songbox"), { title: "이 칸의 곡 (차트 개월 수 순)", hits });
+    });
     const all = genres.map((gg) => D.eg[`${gg}|${e}`]).filter(Boolean);
     const avg = EMOS.map((em) => all.reduce((a, x) => a + x[em] * x.n, 0) / all.reduce((a, x) => a + x.n, 0));
     const max = Math.max(1, ...EMOS.map((em) => c[em]), ...avg);
@@ -565,7 +571,8 @@ async function initFig() {
     tsPanel($("#fgTS"), figSentence(it), it[7], (it[13] || it[7].map(() => 0)).map((v, i) => v / D.meta.year_songs[i] * 100), "1천 행당");
     el.innerHTML = `<h3>${esc(figSentence(it))}</h3><p class="hint">원관념 ${esc(ft || "-")} · 보조관념 ${esc(fs)}</p><p class="hint">곡 비율 ${(it[6] / D.meta.n_songs * 100).toFixed(2)}% · ${it[1] === "met" ? "유형" : "표지"} ${Object.entries(it[4]).map(([m, c]) => `${esc(m)} ${c}`).join(", ")}</p>${pairs}
       <h3>연도별 흐름 <span class="unit">(가사 1천 행당)</span></h3><div class="mini"></div>
-      <h3>장르별 분포 <span class="unit">(이 비유 전체 출현 = 100%)</span></h3><div class="dist g"></div>${exHTML(it[0])}`;
+      <h3>장르별 분포 <span class="unit">(이 비유 전체 출현 = 100%)</span></h3><div class="dist g"></div><div class="songbox"></div>`;
+    songListInto(el.querySelector(".songbox"), { title: "이 비유가 나오는 곡", hits: it[14] || [], mark: new RegExp(reEsc(figParts(it)[1]).replace(/ /g, "\\s*")) });
     const gb = echarts.init(el.querySelector(".dist.g"));
     gb.setOption({ grid: { left: 72, right: 52, top: 4, bottom: 4 }, xAxis: { type: "value", show: false, max: 100 },
       tooltip: { formatter: (p) => `${D.meta.genres[p.dataIndex]}<br>점유율 ${it[12][p.dataIndex]}%<br>1천 행당 ${it[9][p.dataIndex]}<br>곡 비율 ${it[10][p.dataIndex]}%` },
@@ -916,8 +923,14 @@ async function initCol() {
         links: list.map(([k, ld]) => ({ source: label(node), target: label(k), lineStyle: { width: 0.5 + 3.5 * (ld - min) / (max - min || 1), color: css("--line"), opacity: 0.9 } })),
       }],
     }, true);
-    $("#colSide").innerHTML = `<h3>${esc(label(node))} ${ptag(node)} ${langTag(node)} · ${p}</h3>` + (list.length ? `<table class="tbl"><thead><tr><th>공기어</th><th>품사태그</th><th class="num">logDice</th></tr></thead><tbody>${list.map(([k, ld]) => `<tr data-k="${esc(k)}"><td>${esc(label(k))}${langTag(k)}</td><td>${ptag(k)}</td><td class="num">${ld}</td></tr>`).join("")}</tbody></table>` : `<p class="hint">결과가 없습니다.</p>`) + `<h3 style="margin-top:14px">용례</h3>${examplesHTML(node)}`;
-    $("#colSide").querySelectorAll("tbody tr").forEach((tr) => (tr.onclick = () => { if (D.colloc_index[tr.dataset.k] !== undefined) { node = tr.dataset.k; draw(); } }));
+    $("#colSide").innerHTML = `<h3>${esc(label(node))} ${ptag(node)} ${langTag(node)} · ${p}</h3>` + (list.length ? `<table class="tbl"><thead><tr><th>공기어</th><th>품사태그</th><th class="num">logDice</th></tr></thead><tbody>${list.map(([k, ld]) => `<tr data-k="${esc(k)}"><td>${esc(label(k))}${langTag(k)}</td><td>${ptag(k)}</td><td class="num">${ld}</td></tr>`).join("")}</tbody></table>` : `<p class="hint">결과가 없습니다.</p>`);
+    $("#colSide").insertAdjacentHTML("beforeend", `<div class="songbox" id="colSongs"></div>`);
+    songListInto($("#colSongs"), { re: surfaceRegex(node) });
+    $("#colSide").querySelectorAll("tbody tr").forEach((tr) => (tr.onclick = () => {
+      $("#colSide").querySelectorAll("tbody tr").forEach((x) => x.classList.toggle("sel", x === tr));
+      const a = surfaceRegex(node).source, b = surfaceRegex(tr.dataset.k).source;
+      songListInto($("#colSongs"), { title: `${label(node)} + ${label(tr.dataset.k)}이 함께 나오는 행`, re: new RegExp(`(?=.*(?:${a}))(?=.*(?:${b}))`, "i"), mark: new RegExp(b, "i") });
+    }));
     $("#colCompare").innerHTML = `<thead><tr>${D.meta.eras.map((e) => `<th>${e}</th>`).join("")}</tr></thead><tbody><tr>${D.meta.eras.map((e) => `<td>${(data[e] || []).filter(([k]) => typeOk(k) && colPos.match(k)).slice(0, 15).map(([k]) => `<span>${esc(label(k))}</span>`).join("")}</td>`).join("")}</tr></tbody>`;
   };
   chart("colChart").on("click", (d) => { if (d.data && d.data.key && D.colloc_index[d.data.key] !== undefined) { node = d.data.key; draw(); } });
@@ -1025,7 +1038,7 @@ async function initClu() {
       const k = tr.dataset.k, x = byKey.get(k);
       if (x) tsFromCounts($("#cluTS"), `${x.lab} (${x.tg})`, x.ya, x.ys);
       if (D.labels[k]) termPanel($("#cluSide"), k);
-      else $("#cluSide").innerHTML = `<h3>${esc(tr.children[1].textContent)}</h3><p class="hint">10곡 미만</p>`;
+      else { const lab = tr.children[1].textContent; $("#cluSide").innerHTML = `<h3>${esc(lab)}</h3><div class="songbox"></div>`; songListInto($("#cluSide .songbox"), { re: new RegExp(reEsc(lab).replace(/ /g, "\\s*"), lang === "en" ? "i" : "") }); }
     }));
     changeBox($("#cluCH"), {
       items: rows.slice(0, 5000).map((x) => ({ k: x.k, label: x.lab, sub: x.tg, rates: x.ya.map((v, i) => v / D.meta.year_eoj[i] * D.meta.pmw), w: x.ya.reduce((a, b) => a + b, 0) })), minW: 20,
@@ -1049,6 +1062,7 @@ async function initPos() {
     el.innerHTML = `<h3><span class="ptag" style="font-size:15px;color:var(--ink)">${esc(r[0].slice(4))}</span></h3>
       <h3>실현형</h3><p>${r[5].slice(0, 20).map(([, w, c]) => `<span class="tag">${esc(w)} <i>${c}</i></span>`).join("")}</p>
       <h3>연도별 흐름 <span class="unit">(상대빈도*)</span></h3><div class="mini"></div>
+      <div class="songbox"></div>
       <h3>용례</h3><ul class="ex">${r[6].map(([raw, si, surf]) => {
         const s = D.songs[si], at = raw.indexOf(surf);
         const q = at >= 0 ? esc(raw.slice(0, at)) + `<mark>${esc(surf)}</mark>` + esc(raw.slice(at + surf.length)) : esc(raw);
@@ -1059,6 +1073,8 @@ async function initPos() {
       xAxis: { type: "category", data: D.meta.years, ...axisStyle(), axisLabel: { ...baseText(), interval: 4 } }, yAxis: { type: "value", scale: true, ...axisStyle() },
       series: [{ type: "line", data: r[7], smooth: true, symbol: "none", lineStyle: { color: css("--accent"), width: 2 }, areaStyle: { color: css("--accent"), opacity: 0.12 } }],
     });
+    const real = r[5].slice(0, 15).map(([, w]) => reEsc(w).replace(/ /g, "\\s*")).filter(Boolean);
+    songListInto(el.querySelector(".songbox"), { title: "이 패턴이 나오는 곡", re: new RegExp(real.join("|"), r[1] === "en" ? "i" : "") });
   };
   const draw = () => {
     const base = D.posgram.map((r, i) => [r, i]).filter(([r]) => r[1] === lang && slots.match(r[0].slice(4).split(" ").map((t) => ["", t])))
@@ -1174,7 +1190,10 @@ async function initCase() {
         
         <div class="chips pick" id="csEmo">${EMOS.map((e, i) => `<span class="chip ${i ? "" : "on"}" data-i="${i}"><span class="dot" style="background:${EMO_COLORS[i]}"></span>${e}</span>`).join("")}</div>
         <div class="grid-main"><div id="csEmoChart" class="chart xtall"></div>
-        <div class="tablebox"><table class="tbl" id="csEmoTbl"><thead><tr><th>보조관념</th><th class="num">곡 수</th><th class="num">그 감정 곡 중</th><th class="num">Log Ratio</th></tr></thead><tbody></tbody></table></div></div></div>`;
+        <div class="tablebox"><table class="tbl" id="csEmoTbl"><thead><tr><th>보조관념</th><th class="num">곡 수</th><th class="num">그 감정 곡 중</th><th class="num">Log Ratio</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="songbox" id="csEmoSongs"></div></div>`;
+      let curEmo = 0;
+      const figSongs = (src, pred) => { const m = new Map(); D.figur.items.filter((it) => it[2] === "ko" && figParts(it)[1] === src).forEach((it) => (it[14] || []).forEach(([i, l]) => { if (!m.has(i) && (!pred || pred(i))) m.set(i, l); })); return [...m]; };
       const draw = (i) => {
         const d = C.emo_fig[i], top = d.top.slice(0, 20);
         chart("csEmoChart").setOption({
@@ -1183,7 +1202,11 @@ async function initCase() {
           yAxis: { type: "category", data: top.map((r) => r[0]), inverse: true, ...axisStyle() },
           series: [{ type: "bar", data: top.map((r) => r[3]), itemStyle: { color: EMO_COLORS[i] } }],
         }, true);
-        $("#csEmoTbl tbody").innerHTML = d.top.map((r) => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num">${r[2]}%</td><td class="num">${r[3]}</td></tr>`).join("") || `<tr><td colspan="4" class="hint">결과가 없습니다.</td></tr>`;
+        curEmo = i;
+        $("#csEmoTbl tbody").innerHTML = d.top.map((r) => `<tr data-s="${esc(r[0])}"><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num">${r[2]}%</td><td class="num">${r[3]}</td></tr>`).join("") || `<tr><td colspan="4" class="hint">결과가 없습니다.</td></tr>`;
+        const show = (src) => { const row = d.top.find((r) => r[0] === src) || []; songListInto($("#csEmoSongs"), { title: `${EMOS[curEmo]} 곡에서 ‘${src}’ 비유가 나오는 곡`, hits: row[4] || figSongs(src, (j) => D.songs[j][7][curEmo] >= 2) }); };
+        $("#csEmoTbl tbody").querySelectorAll("tr[data-s]").forEach((tr) => (tr.onclick = () => { $("#csEmoTbl tbody").querySelectorAll("tr").forEach((x) => x.classList.toggle("sel", x === tr)); show(tr.dataset.s); }));
+        chart("csEmoChart").off("click"); chart("csEmoChart").on("click", (p) => show(top[p.dataIndex][0]));
       };
       $("#csEmo").querySelectorAll(".chip").forEach((c) => (c.onclick = () => { $("#csEmo").querySelectorAll(".chip").forEach((x) => x.classList.toggle("on", x === c)); draw(+c.dataset.i); }));
       draw(0);
@@ -1223,7 +1246,14 @@ async function initCase() {
         if (p.dataType !== "node") return;
         const nm = p.data.name, role = p.data.role;
         const rel = C.meta_graph.filter(([t, s]) => (role === "t" ? t : s) === nm).slice(0, 30);
-        $("#csGSide").innerHTML = `<h3>${esc(nm)} <span class="unit">(${role === "t" ? "원관념" : "보조관념"})</span></h3><table class="tbl"><thead><tr><th>은유</th><th class="num">곡 수</th></tr></thead><tbody>${rel.map(([t, s, n, en]) => `<tr><td>${esc(t)}${t && !hasBatchim(t) ? "는" : "은"} ${esc(s)}${hasBatchim(s) ? "이다" : "다"}</td><td class="num">${n}</td></tr>`).join("")}</tbody></table>`;
+        $("#csGSide").innerHTML = `<h3>${esc(nm)} <span class="unit">(${role === "t" ? "원관념" : "보조관념"})</span></h3><table class="tbl"><thead><tr><th>은유</th><th class="num">곡 수</th></tr></thead><tbody>${rel.map(([t, s, n, en, k]) => `<tr data-k="${esc(k)}"><td>${esc(t)}${t && !hasBatchim(t) ? "는" : "은"} ${esc(s)}${hasBatchim(s) ? "이다" : "다"}</td><td class="num">${n}</td></tr>`).join("")}</tbody></table><div class="songbox"></div>`;
+        const itemsBy = new Map(D.figur.items.map((it) => [it[0], it]));
+        const songsOf = (keys) => { const m = new Map(); keys.forEach((k) => ((itemsBy.get(k) || [])[14] || []).forEach(([i, l]) => { if (!m.has(i)) m.set(i, l); })); return [...m]; };
+        songListInto($("#csGSide .songbox"), { title: "이 은유가 나오는 곡", hits: songsOf(rel.map((r) => r[4])) });
+        $("#csGSide").querySelectorAll("tbody tr[data-k]").forEach((tr) => (tr.onclick = () => {
+          $("#csGSide").querySelectorAll("tbody tr").forEach((x) => x.classList.toggle("sel", x === tr));
+          songListInto($("#csGSide .songbox"), { title: tr.children[0].textContent, hits: songsOf([tr.dataset.k]) });
+        }));
       });
       seg("#csGEra", (v) => { era = +v; draw(); });
       $("#csGMin").onchange = draw; $("#csGQ").oninput = draw;
@@ -1233,10 +1263,13 @@ async function initCase() {
     pron() {
       const keys = C.pronouns.filter((k) => D.ts[k]);
       const names = keys.map((k) => label(k));
+      const PRON_RE = { 나: "나|내|난|날", 너: "너|네|넌|널|니", 그대: "그대", 당신: "당신", 우리: "우리", 그녀: "그녀", 자기: "자기" };
       body.innerHTML = `<div class="card"><h2>대명사의 변화</h2>
-        <div id="csP1" class="chart tall"></div><div id="csP2" class="chart tall"></div><div id="csP3" class="chart tall"></div></div>`;
+        <div id="csP1" class="chart tall"></div><div id="csP2" class="chart tall"></div><div id="csP3" class="chart tall"></div><div class="songbox" id="csPSongs"></div></div>`;
       const rel = keys.map((k) => D.ts[k][0].map((v, i) => v / D.meta.year_eoj[i] * D.meta.pmw));
       line("csP1", names, years.map((_, y) => rel.map((r) => +r[y].toFixed(1))));
+      const pronSongs = (nm, year) => songListInto($("#csPSongs"), { title: `‘${nm}’이 나오는 곡${year ? ` (${year}년 차트)` : ""}`, re: new RegExp(`(^|\\s)(${PRON_RE[nm] || reEsc(nm)})`), filter: year ? (i) => D.songs[i][3] <= +year && D.songs[i][3] + D.songs[i][5] / 12 + 1 >= +year : null });
+      ["csP1", "csP2", "csP3"].forEach((id) => { chart(id).off("click"); chart(id).on("click", (p) => pronSongs(p.seriesName, id === "csP3" ? null : p.name)); });
       line("csP2", names, years.map((_, y) => { const t = rel.reduce((a, r) => a + r[y], 0) || 1; return rel.map((r) => +(r[y] / t * 100).toFixed(2)); }), { stack: true, max: 100, unit: "%" });
       const gi = (g) => D.cells.cells.map((c, i) => [c, i]).filter(([[, gg]]) => gg === g).map(([, i]) => i);
       const data = genres.map((g) => { const idx = gi(g), e = sumOf(D.cells.eoj, idx) || 1; return keys.map((k) => +(sumOf(D.cells.items[k][0], idx) / e * D.meta.pmw).toFixed(1)); });
@@ -1282,7 +1315,7 @@ async function initCase() {
         <div class="chips pick" id="akArt">${AK.order.map((a, i) => `<span class="chip ${i ? "" : "on"}" data-a="${esc(a)}">${esc(a)}</span>`).join("")}</div>
         <div class="seg" id="akLayer"><button data-v="ko" class="on">한국어 단어</button><button data-v="en">영어 단어</button><button data-v="mwe">N-gram</button></div>
         <p class="hint" id="akInfo"></p>
-        <div class="tablebox"><table class="tbl" id="akTbl"><thead><tr><th class="num">순위</th><th>핵심어</th><th>품사태그</th><th class="num">목표 말뭉치<br>상대빈도*</th><th class="num">참조 말뭉치<br>상대빈도*</th><th class="num">LL</th><th class="num">Log Ratio</th><th class="num">곡 수</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="tablebox"><table class="tbl" id="akTbl"><thead><tr><th class="num">순위</th><th>핵심어</th><th>품사태그</th><th class="num">목표 말뭉치<br>상대빈도*</th><th class="num">참조 말뭉치<br>상대빈도*</th><th class="num">LL</th><th class="num">Log Ratio</th><th class="num">곡 수</th></tr></thead><tbody></tbody></table></div><div class="songbox" id="akSongs"></div></div>
         <div class="card"><h2>가수별 문체 비교</h2>
         <div class="row wrapgap"><input id="csAQ" list="csAList" placeholder="가수 이름"><datalist id="csAList">${list.map((a) => `<option value="${esc(a.name)}">`).join("")}</datalist><button id="csAAdd" class="primary">추가</button></div>
         <div class="chips" id="csASel"></div>
@@ -1293,7 +1326,11 @@ async function initCase() {
       const akDraw = () => {
         const d = AK.data[akA], rows = d.kw[akL];
         $("#akInfo").textContent = `목표 ${akA} (${d.songs}곡), 참조 다른 모든 곡 | LL ≥ 15.13 | ${PMW_NOTE}`;
-        $("#akTbl tbody").innerHTML = rows.map((r, i) => `<tr><td class="num">${i + 1}</td><td>${esc(label(r[0]))}</td><td>${ptag(r[0])}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td class="num">${r[4]}</td><td class="num">${r[5]}</td></tr>`).join("") || `<tr><td colspan="8" class="hint">결과가 없습니다.</td></tr>`;
+        $("#akTbl tbody").innerHTML = rows.map((r, i) => `<tr data-k="${esc(r[0])}"><td class="num">${i + 1}</td><td>${esc(label(r[0]))}</td><td>${ptag(r[0])}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td class="num">${r[4]}</td><td class="num">${r[5]}</td></tr>`).join("") || `<tr><td colspan="8" class="hint">결과가 없습니다.</td></tr>`;
+        $("#akTbl tbody").querySelectorAll("tr[data-k]").forEach((tr) => (tr.onclick = () => {
+          $("#akTbl tbody").querySelectorAll("tr").forEach((x) => x.classList.toggle("sel", x === tr));
+          songListInto($("#akSongs"), { title: `${akA}의 곡에서 ‘${label(tr.dataset.k)}’`, re: surfaceRegex(tr.dataset.k), filter: (i) => D.songs[i][2] === akA });
+        }));
       };
       $("#akArt").querySelectorAll(".chip").forEach((c) => (c.onclick = () => { $("#akArt").querySelectorAll(".chip").forEach((x) => x.classList.toggle("on", x === c)); akA = c.dataset.a; akDraw(); }));
       $("#akLayer").querySelectorAll("button").forEach((b) => (b.onclick = () => { $("#akLayer").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); akL = b.dataset.v; akDraw(); }));
@@ -1498,7 +1535,140 @@ document.addEventListener("click", (e) => {
   if (first && first.textContent.startsWith("순위") && idx !== 0) rows.forEach((r, i) => (r.children[0].textContent = i + 1));
 });
 
-const INIT = { top: initTop, case: initCase, clu: initClu, pos: initPos, freq: initFreq, fig: initFig, kw: initKW, mwe: initMWE, col: initCol, eg: initEG, rec: initRec };
+// ---------- 공통: 이 말이 나오는 곡 (가사 전체에서 찾기) ----------
+let ALL_LYR = null;
+async function loadAllLyrics() {
+  if (!ALL_LYR) {
+    const n = Math.ceil(D.songs.length / 200);
+    const parts = await Promise.all(Array.from({ length: n }, (_, i) => fetch(`data/lyrics/${String(i).padStart(3, "0")}.json`).then((r) => r.json())));
+    ALL_LYR = parts.flat().map((x) => x.l);
+  }
+  return ALL_LYR;
+}
+const reEsc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// 항목 키 → 가사에서 찾을 정규식
+function surfaceRegex(key) {
+  const lab = label(key);
+  if (key.startsWith("en:")) return new RegExp(`\\b${reEsc(lab)}\\b`, "i");
+  if (key.startsWith("enm:")) return new RegExp(`\\b${reEsc(lab).replace(/ /g, "\\s+")}\\b`, "i");
+  if (key.startsWith("kom:")) return new RegExp(reEsc(lab).replace(/ /g, "\\s*"));
+  const tag = tagOf(key);
+  if ((tag === "VV" || tag === "VA") && lab.endsWith("다")) return new RegExp(stemVariants(lab.slice(0, -1)).map(reEsc).join("|"));
+  return new RegExp(reEsc(lab));
+}
+// 용언 어간의 활용형 앞부분: 피우→피워, 보→봐, 하→해, 되→돼, 모르→몰라, 아름답→아름다워, 듣→들어, 살→사
+function stemVariants(stem) {
+  const out = new Set([stem]);
+  const last = stem.charCodeAt(stem.length - 1) - 0xac00, pre = stem.slice(0, -1);
+  if (last < 0 || last > 11171) return [...out];
+  const cho = Math.floor(last / 588), jung = Math.floor((last % 588) / 28), jong = last % 28;
+  const mk = (c, v, j = 0) => String.fromCharCode(0xac00 + c * 588 + v * 28 + j);
+  if (jong === 0) {
+    // 앞 음절 모음이 ㅏ·ㅗ면 '아', 아니면 '어' (모음 조화)
+    const pv = pre ? Math.floor(((pre.charCodeAt(pre.length - 1) - 0xac00) % 588) / 28) : -1;
+    const bright = pv === 0 || pv === 8;
+    const merge = { 8: 9, 13: 14, 20: 6, 11: 10 };           // ㅗ→ㅘ, ㅜ→ㅝ, ㅣ→ㅕ, ㅚ→ㅙ
+    if (merge[jung] !== undefined) out.add(pre + mk(cho, merge[jung]));
+    if (jung === 18 && cho !== 5) out.add(pre + mk(cho, bright ? 0 : 4));   // ㅡ 탈락: 쓰→써, 아프→아파
+    if (stem.endsWith("하")) out.add(pre + "해");
+    if (jung === 18 && cho === 5 && pre) {                     // 르 불규칙: 모르→몰라, 부르→불러
+      const p = pre.charCodeAt(pre.length - 1) - 0xac00;
+      if (p >= 0 && p % 28 === 0) { const pp = pre.slice(0, -1) + String.fromCharCode(0xac00 + p + 8); out.add(pp + (bright ? "라" : "러")); }
+    }
+  } else if (jong === 17) {                                    // ㅂ 불규칙: 아름답→아름다워/아름다운
+    out.add(pre + mk(cho, jung) + "워"); out.add(pre + mk(cho, jung) + "운"); out.add(pre + mk(cho, jung) + "울");
+  } else if (jong === 7) {                                     // ㄷ 불규칙: 듣→들
+    out.add(pre + mk(cho, jung, 8));
+  } else if (jong === 8) {                                     // ㄹ 탈락: 살→사(는)
+    out.add(pre + mk(cho, jung) + "는"); out.add(pre + mk(cho, jung) + "니"); out.add(pre + mk(cho, jung) + "세");
+  }
+  return [...out].sort((a, b) => b.length - a.length);
+}
+const songScore = (i) => D.songs[i][5] * 1000 - D.songs[i][4];      // 차트 개월 수, 최고 순위 순
+// el 안에 곡 목록을 그린다. hits: [[곡 번호, 행]] 또는 정규식으로 찾기
+async function songListInto(el, { title = "이 말이 나오는 곡", re = null, hits = null, filter = null, mark = null, limit = 50 }) {
+  if (!el) return;
+  el.innerHTML = `<h3>${esc(title)}</h3><p class="hint">찾는 중…</p>`;
+  let rows = hits;
+  if (!rows) {
+    const L = await loadAllLyrics();
+    rows = [];
+    for (let i = 0; i < L.length; i++) {
+      if (filter && !filter(i)) continue;
+      const line = L[i].find((l) => re.test(l));
+      if (line) rows.push([i, line]);
+    }
+  } else if (filter) rows = rows.filter(([i]) => filter(i));
+  rows = rows.slice().sort((a, b) => songScore(b[0]) - songScore(a[0]));
+  const hl = (line) => {
+    const r = mark || re;
+    if (!r) return esc(line);
+    const m = line.match(r);
+    if (!m) return esc(line);
+    const at = m.index;
+    return esc(line.slice(0, at)) + `<mark>${esc(m[0])}</mark>` + esc(line.slice(at + m[0].length));
+  };
+  el.innerHTML = `<h3>${esc(title)} <span class="unit">${rows.length.toLocaleString()}곡</span></h3>` + (rows.length ? `<ul class="ex songhits">${rows.slice(0, limit).map(([i, line]) => {
+    const s = D.songs[i];
+    return `<li><q>${hl(line)}</q><small><button class="songlink" data-song="${i}" data-line="${esc(line)}">${esc(s[1])}</button> · ${esc(s[2])} · ${s[3]}</small></li>`;
+  }).join("")}</ul>${rows.length > limit ? `<p class="hint">상위 ${limit}곡</p>` : ""}` : `<p class="hint">결과가 없습니다.</p>`);
+}
+
+
+// ---------- 구문: 빈칸 틀 ----------
+async function initCx() {
+  await Promise.all([load("construct"), load("cells")]);
+  const C = D.construct;
+  const slotName = (t) => TAG_NAMES[t] || t;
+  const cxRe = (r) => new RegExp(reEsc(r.label).replace(/＿/g, "[가-힣]{1,5}").replace(/ /g, "\\s*"));
+  let slot = "", sortK = "types";
+  const draw = () => {
+    const q = $("#cxQ").value.trim();
+    const rows = C.map((r, i) => [r, i]).filter(([r]) => (!slot || r.slot === slot) && (!q || r.label.includes(q) || r.fills.some(([f]) => f.startsWith(q))))
+      .sort((a, b) => sortK === "prod" ? b[0].prod - a[0].prod : sortK === "tok" ? b[0].tok - a[0].tok : b[0].types - a[0].types);
+    $("#cxInfo").textContent = `${rows.length.toLocaleString()}개 | ${PMW_NOTE}`;
+    $("#cxTbl tbody").innerHTML = rows.slice(0, 1000).map(([r, i], k) => {
+      const rel = r.year.reduce((a, b) => a + b, 0) / r.year.length;
+      return `<tr data-i="${i}"><td class="num">${k + 1}</td><td class="cx">${esc(r.label).replace(/＿/g, `<b class="slotmark">＿</b>`)}</td><td>${esc(slotName(r.slot))}</td>
+        <td class="num">${rel.toFixed(2)}</td><td class="num">${(r.songs / D.meta.n_songs * 100).toFixed(2)}%</td><td class="num">${r.types}</td><td class="num">${r.prod}</td>
+        <td>${r.fills.slice(0, 5).map(([f]) => esc(f)).join(", ")}</td></tr>`;
+    }).join("") || `<tr><td colspan="8" class="hint">결과가 없습니다.</td></tr>`;
+    $("#cxTbl tbody").querySelectorAll("tr[data-i]").forEach((tr) => (tr.onclick = () => {
+      $("#cxTbl tbody").querySelectorAll("tr").forEach((x) => x.classList.toggle("sel", x === tr));
+      side(C[+tr.dataset.i]);
+    }));
+    changeBox($("#cxCH"), {
+      items: rows.map(([r, i]) => ({ k: "cx" + i, label: r.label, sub: slotName(r.slot), rates: r.year, w: r.tok, r })), minW: 50,
+      onPick: (x) => side(x.r),
+    });
+  };
+  const side = (r) => {
+    const el = $("#cxSide");
+    const fills = r.fills.slice().sort((a, b) => b[2] - a[2]).slice(0, 25);
+    el.innerHTML = `<h3 class="cx">${esc(r.label).replace(/＿/g, `<b class="slotmark">＿</b>`)} <span class="unit">빈칸: ${esc(slotName(r.slot))}</span></h3>
+      <p class="hint">토큰 ${r.tok.toLocaleString()} · 타입 ${r.types} · 생산성 ${r.prod}</p>
+      <h3>빈칸에 끌리는 말 <span class="unit">(결합 강도 LL 순)</span></h3>
+      <table class="tbl"><thead><tr><th>채움말</th><th class="num">빈도</th><th class="num">LL</th></tr></thead><tbody>${fills.map(([f, c, ll]) => `<tr data-f="${esc(f)}"><td>${esc(f)}</td><td class="num">${c}</td><td class="num">${ll}</td></tr>`).join("")}</tbody></table>
+      <h3>시대별 채움말</h3><table class="tbl compare"><thead><tr>${D.meta.eras.map((e) => `<th>${e}</th>`).join("")}</tr></thead><tbody><tr>${r.era.map((col) => `<td>${col.slice(0, 10).map(([f, c]) => `<span>${esc(f)} <i class="ptag">${c}</i></span><br>`).join("")}</td>`).join("")}</tr></tbody></table>
+      <div class="songbox"></div>`;
+    const re = cxRe(r);
+    songListInto(el.querySelector(".songbox"), { title: "이 틀이 나오는 곡", re });
+    el.querySelectorAll("tbody tr[data-f]").forEach((tr) => (tr.onclick = () => {
+      el.querySelectorAll("tbody tr").forEach((x) => x.classList.toggle("sel", x === tr));
+      const f = tr.dataset.f, stem = /[다]$/.test(f) && (r.slot === "VV" || r.slot === "VA") ? f.slice(0, -1) : f;
+      const fr = new RegExp(reEsc(r.label).replace("＿", reEsc(stem) + "[가-힣]{0,3}").replace(/＿/g, "[가-힣]{1,5}").replace(/ /g, "\\s*"));
+      songListInto(el.querySelector(".songbox"), { title: `‘${f}’ 자리의 곡`, re: fr });
+    }));
+    tsPanel($("#cxTS"), r.label, r.year, r.ycov);
+  };
+  seg("#cxSlot", (v) => { slot = v; draw(); });
+  seg("#cxSort", (v) => { sortK = v; draw(); });
+  $("#cxQ").oninput = draw;
+  draw();
+}
+
+
+const INIT = { cx: initCx, top: initTop, case: initCase, clu: initClu, pos: initPos, freq: initFreq, fig: initFig, kw: initKW, mwe: initMWE, col: initCol, eg: initEG, rec: initRec };
 
 // ---------- 시작 ----------
 (async () => {

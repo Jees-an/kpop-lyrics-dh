@@ -224,3 +224,7 @@ details.method-box[open] > summary { margin-bottom: 12px; }
 .tbl thead th { cursor: pointer; user-select: none; }
 .tbl thead th:hover { color: var(--accent); }
 .tbl.defs thead th, .tbl.overview thead th { cursor: default; }
+.songbox { margin-top: 14px; }
+.songhits li q { font-size: 14px; }
+.slotmark { color: var(--accent); }
+.cx { font-family: "Noto Serif KR", serif; }
