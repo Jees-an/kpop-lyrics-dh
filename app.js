@@ -902,6 +902,9 @@ async function initCol() {
     const p = getP(), list = (data[p] || []).filter(([k]) => typeOk(k) && colPos.match(k)).slice(0, 25);
     const max = Math.max(...list.map((x) => x[1]), 1), min = Math.min(...list.map((x) => x[1]), 0);
     const colorOf = (k) => css(isNgram(k) ? "--mwe" : layerOf(k) === "ko" ? "--ko" : "--en");
+    // 옆 칸을 먼저 띄워 그래프 영역 크기를 확정한 뒤 그린다(가운데 정렬)
+    if (!$("#colSide").innerHTML) $("#colSide").innerHTML = "&nbsp;";
+    chart("colChart").resize();
     chart("colChart").setOption({
       tooltip: { formatter: (d) => d.dataType === "node" && d.data.ld ? `${esc(d.name)}<br>logDice ${d.data.ld}` : esc(d.name) },
       series: [{
