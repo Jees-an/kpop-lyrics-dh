@@ -1630,8 +1630,8 @@ async function initCx() {
     $("#cxTbl tbody").innerHTML = rows.slice(0, 1000).map(([r, i], k) => {
       const rel = r.year.reduce((a, b) => a + b, 0) / r.year.length;
       return `<tr data-i="${i}"><td class="num">${k + 1}</td><td class="cx">${esc(r.label).replace(/＿/g, `<b class="slotmark">＿</b>`)}</td>
-        <td class="fills">${r.fills.slice(0, 10).map(([f]) => esc(f)).join(", ")}</td><td>${esc(slotName(r.slot))}</td>
-        <td class="num">${rel.toFixed(2)}</td><td class="num">${(r.songs / D.meta.n_songs * 100).toFixed(2)}%</td><td class="num">${r.types}</td><td class="num">${r.prod}</td></tr>`;
+        <td class="fills">${r.fills.slice(0, 10).map(([f, c]) => `${esc(f)} <i>${(c / r.tok * 100).toFixed(1)}%</i>`).join(", ")}</td><td>${esc(slotName(r.slot))}</td>
+        <td class="num">${rel.toFixed(2)}</td><td class="num">${(r.songs / D.meta.n_songs * 100).toFixed(2)}%</td><td class="num">${r.types}</td><td class="num">${r.prod.toFixed(2)}</td></tr>`;
     }).join("") || `<tr><td colspan="8" class="hint">결과가 없습니다.</td></tr>`;
     $("#cxTbl tbody").querySelectorAll("tr[data-i]").forEach((tr) => (tr.onclick = () => {
       $("#cxTbl tbody").querySelectorAll("tr").forEach((x) => x.classList.toggle("sel", x === tr));
@@ -1646,9 +1646,9 @@ async function initCx() {
     const el = $("#cxSide");
     const fills = r.fills.slice().sort((a, b) => b[2] - a[2]).slice(0, 25);
     el.innerHTML = `<h3 class="cx">${esc(r.label).replace(/＿/g, `<b class="slotmark">＿</b>`)} <span class="unit">빈칸: ${esc(slotName(r.slot))}</span></h3>
-      <p class="hint">토큰 ${r.tok.toLocaleString()} · 타입 ${r.types} · 생산성 ${r.prod}</p>
+      <p class="hint">토큰 ${r.tok.toLocaleString()} · 타입 ${r.types} · 생산성 ${r.prod.toFixed(2)}</p>
       <h3>빈칸에 끌리는 말 <span class="unit">(결합 강도 LL 순)</span></h3>
-      <table class="tbl"><thead><tr><th>채움말</th><th class="num">빈도</th><th class="num">LL</th></tr></thead><tbody>${fills.map(([f, c, ll]) => `<tr data-f="${esc(f)}"><td>${esc(f)}</td><td class="num">${c}</td><td class="num">${ll}</td></tr>`).join("")}</tbody></table>
+      <table class="tbl"><thead><tr><th>채움말</th><th class="num">빈도</th><th class="num">비율</th><th class="num">LL</th></tr></thead><tbody>${fills.map(([f, c, ll]) => `<tr data-f="${esc(f)}"><td>${esc(f)}</td><td class="num">${c}</td><td class="num">${(c / r.tok * 100).toFixed(1)}%</td><td class="num">${ll}</td></tr>`).join("")}</tbody></table>
       <h3>시대별 채움말</h3><table class="tbl compare"><thead><tr>${D.meta.eras.map((e) => `<th>${e}</th>`).join("")}</tr></thead><tbody><tr>${r.era.map((col) => `<td>${col.slice(0, 10).map(([f, c]) => `<span>${esc(f)} <i class="ptag">${c}</i></span><br>`).join("")}</td>`).join("")}</tr></tbody></table>
       <div class="songbox"></div>`;
     const re = cxRe(r);
